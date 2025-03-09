@@ -169,7 +169,7 @@ if __name__ == '__main__':
         print("Warning: OPENAI_API_KEY environment variable is not set.")
         print("Please set it in a .env file or in your environment variables.")
     
-    print("\nInterviewer Assistant is running!")
-    print("Both microphone input and file uploads are supported.")
+    print("\nGrio - AI Interview Assistant is running!")
+    print("Microphone speech recognition is active.")
     
     app.run(host=HOST, port=PORT, debug=DEBUG)

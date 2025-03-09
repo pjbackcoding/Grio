@@ -1,15 +1,15 @@
-# Interview Assistant
+# Grio - AI Interview Assistant
 
-An AI-powered tool that transcribes job interview questions and provides written answers for candidates in real-time. Supports multiple languages including English, French, Spanish, German, Italian, Japanese, and Chinese.
+An AI-powered tool that transcribes spoken interview questions through your microphone and provides written answers for candidates in real-time. Supports multiple languages including English, French, Spanish, German, Italian, Japanese, and Chinese.
 
 ## Features
 
-- Real-time speech-to-text transcription of interview questions
+- Real-time speech-to-text transcription of interview questions via microphone
 - Continuous speech recognition with intelligent pause detection
 - Multilingual support (English, French, Spanish, German, Italian, Japanese, Chinese)
-- AI-generated responses to common interview questions
-- Simple web interface for easy interaction
-- Support for various interview contexts and job roles
+- AI-generated responses tailored to specific job roles
+- Context-aware responses based on additional information you provide
+- Simple, clean web interface for distraction-free interview preparation
 
 ## Prerequisites
 

@@ -112,8 +112,8 @@
         </div>
 
         <div class="controls mb-3">
-            <h5>Microphone Input</h5>
-            <p class="text-muted">Use your microphone to capture interview questions</p>
+            <h5>Voice Controls</h5>
+            <p class="text-muted">Speak your interview questions using your microphone</p>
             <div>
                 <button id="startBtn" class="btn btn-primary">Start Listening</button>
                 <button id="stopBtn" class="btn btn-danger" disabled>Stop Listening</button>
@@ -121,14 +121,7 @@
             </div>
         </div>
         
-        <div class="file-upload mt-4 mb-3">
-            <h5>Or Upload Audio File</h5>
-            <p class="text-muted">Upload an audio recording of your interview question</p>
-            <div class="input-group mb-3">
-                <input type="file" id="audioFileInput" class="form-control" accept="audio/*">
-                <button id="uploadBtn" class="btn btn-primary">Transcribe</button>
-            </div>
-        </div>
+
 
         <div id="status" class="alert alert-info hidden">
             <span id="recordingIndicator" class="recording-indicator hidden"></span>
@@ -154,15 +147,14 @@
         const jobRoleInput = document.getElementById('jobRole');
         const contextInput = document.getElementById('context');
         const languageSelect = document.getElementById('language');
-        const audioFileInput = document.getElementById('audioFileInput');
-        const uploadBtn = document.getElementById('uploadBtn');
+
 
         // Variables
         let isRecording = false;
         let mediaRecorder;
         let audioChunks = [];
         let recognition;
-        let selectedFile = null;
+
         
         // Check if browser supports SpeechRecognition
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -259,13 +251,7 @@
         startBtn.addEventListener('click', startRecording);
         stopBtn.addEventListener('click', stopRecording);
         clearBtn.addEventListener('click', clearConversation);
-        uploadBtn.addEventListener('click', uploadAudioFile);
-        audioFileInput.addEventListener('change', function(e) {
-            selectedFile = e.target.files[0];
-            if(selectedFile) {
-                updateStatus(`File selected: ${selectedFile.name}`);
-            }
-        });
+
 
         // Functions
         // Helper function to get human-readable language name
@@ -425,50 +411,7 @@
             }
         }
 
-        // Function to handle audio file uploads
-        function uploadAudioFile() {
-            const fileInput = audioFileInput;
-            if (!fileInput.files || fileInput.files.length === 0) {
-                updateStatus('Please select an audio file first.');
-                return;
-            }
-            
-            const file = fileInput.files[0];
-            const formData = new FormData();
-            formData.append('audio', file);
-            
-            // Add the current language selection to the form data
-            const language = languageSelect.value;
-            formData.append('language', language);
-            
-            // Disable upload button and show status
-            uploadBtn.disabled = true;
-            status.classList.remove('hidden');
-            updateStatus(`Transcribing ${getLanguageName(language)} audio file... This may take a moment.`);
-            
-            fetch('/api/transcribe', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    updateStatus(`Error: ${data.error}`);
-                } else {
-                    // Process the transcribed text
-                    processQuestion(data.text);
-                    // Reset file input for next upload
-                    fileInput.value = '';
-                }
-                // Re-enable upload button
-                uploadBtn.disabled = false;
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                updateStatus('Error transcribing audio file. Please try again.');
-                uploadBtn.disabled = false;
-            });
-        }
+
         
         // Initialize
         updateStatus('Ready to start');
