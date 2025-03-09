@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interview Assistant</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .conversation {
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+        }
+        .question {
+            background-color: #e9ecef;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .answer {
+            background-color: #d1e7dd;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .settings {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+        }
+        .recording-indicator {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            background-color: red;
+            border-radius: 50%;
+            margin-right: 10px;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Interview Assistant</h1>
+            <p class="text-muted">Your AI-powered interview companion</p>
+        </div>
+
+        <div class="settings mb-4">
+            <h5>Settings</h5>
+            <div class="mb-3">
+                <label for="jobRole" class="form-label">Job Role (optional)</label>
+                <input type="text" class="form-control" id="jobRole" placeholder="e.g., Software Engineer, Marketing Manager">
+            </div>
+            <div class="mb-3">
+                <label for="context" class="form-label">Additional Context (optional)</label>
+                <textarea class="form-control" id="context" rows="2" placeholder="Add any additional context about your experience or the role"></textarea>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="startBtn" class="btn btn-primary">Start Listening</button>
+            <button id="stopBtn" class="btn btn-danger" disabled>Stop Listening</button>
+            <button id="clearBtn" class="btn btn-secondary">Clear Conversation</button>
+        </div>
+
+        <div id="status" class="alert alert-info hidden">
+            <span id="recordingIndicator" class="recording-indicator hidden"></span>
+            <span id="statusText">Ready to start</span>
+        </div>
+
+        <div class="conversation" id="conversation">
+            <div class="text-center text-muted">
+                <p>Click "Start Listening" to begin the interview</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM elements
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const status = document.getElementById('status');
+        const statusText = document.getElementById('statusText');
+        const recordingIndicator = document.getElementById('recordingIndicator');
+        const conversation = document.getElementById('conversation');
+        const jobRoleInput = document.getElementById('jobRole');
+        const contextInput = document.getElementById('context');
+
+        // Variables
+        let isRecording = false;
+        let mediaRecorder;
+        let audioChunks = [];
+        let recognition;
+
+        // Check if browser supports SpeechRecognition
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const hasSpeechRecognition = !!SpeechRecognition;
+
+        // Initialize speech recognition if available
+        if (hasSpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                processQuestion(transcript);
+            };
+
+            recognition.onerror = function(event) {
+                console.error('Speech recognition error', event.error);
+                updateStatus('Error recognizing speech. Please try again.');
+                stopRecording();
+            };
+
+            recognition.onend = function() {
+                if (isRecording) {
+                    recognition.start();
+                }
+            };
+        }
+
+        // Event listeners
+        startBtn.addEventListener('click', startRecording);
+        stopBtn.addEventListener('click', stopRecording);
+        clearBtn.addEventListener('click', clearConversation);
+
+        // Functions
+        function startRecording() {
+            if (!hasSpeechRecognition) {
+                updateStatus('Speech recognition is not supported in your browser.');
+                return;
+            }
+
+            isRecording = true;
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            status.classList.remove('hidden');
+            recordingIndicator.classList.remove('hidden');
+            updateStatus('Listening...');
+
+            recognition.start();
+        }
+
+        function stopRecording() {
+            if (isRecording) {
+                isRecording = false;
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                recordingIndicator.classList.add('hidden');
+                updateStatus('Stopped listening');
+
+                if (recognition) {
+                    recognition.stop();
+                }
+            }
+        }
+
+        function updateStatus(message) {
+            statusText.textContent = message;
+            status.classList.remove('hidden');
+        }
+
+        function processQuestion(question) {
+            // Add question to conversation
+            addQuestionToConversation(question);
+            
+            // Update status
+            updateStatus('Generating response...');
+            
+            // Get job role and context
+            const jobRole = jobRoleInput.value.trim();
+            const context = contextInput.value.trim();
+            
+            // Generate response
+            fetch('/api/generate-response', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    question: question,
+                    job_role: jobRole,
+                    context: context
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    updateStatus(`Error: ${data.error}`);
+                } else {
+                    addAnswerToConversation(data.answer);
+                    updateStatus('Listening...');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                updateStatus('Error generating response. Please try again.');
+            });
+        }
+
+        function addQuestionToConversation(question) {
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'question';
+            questionDiv.innerHTML = `<strong>Question:</strong> ${question}`;
+            conversation.appendChild(questionDiv);
+            conversation.scrollTop = conversation.scrollHeight;
+        }
+
+        function addAnswerToConversation(answer) {
+            const answerDiv = document.createElement('div');
+            answerDiv.className = 'answer';
+            answerDiv.innerHTML = `<strong>Answer:</strong> ${answer}`;
+            conversation.appendChild(answerDiv);
+            conversation.scrollTop = conversation.scrollHeight;
+        }
+
+        function clearConversation() {
+            conversation.innerHTML = `
+                <div class="text-center text-muted">
+                    <p>Click "Start Listening" to begin the interview</p>
+                </div>
+            `;
+            updateStatus('Conversation cleared');
+        }
+
+        // Initialize
+        updateStatus('Ready to start');
+    </script>
+</body>
+</html>
